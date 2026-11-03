@@ -269,7 +269,6 @@ Group leader's reflection on the project
 Other members' reflections on the project
 
 ## Abigail Ackor
-Other members' reflections on the project
-
+This project seemed daunting at first just because of the length of it. However, once we worked out our strategy as a group it went by faster than i anticipated. The code made sense and was a lot of iterations on itself which made identifying what different parts were doing easier. We had great pseudocode to start from Ildiko which made the formulation a lot easier.
 # Generative AI Appendix
 As per the syllabus
