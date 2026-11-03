@@ -253,22 +253,84 @@ FOR each test case (input, expected answer)
 ```
 
 # Results
-Results output
+'BWT()'
+lo$oogg
+annb$aa
+
+'suffix_array()'
+[6, 3, 0, 5, 2, 4, 1]
+[6, 5, 3, 1, 0, 4, 2]
+
+'BWT_from_suffix_array()'
+annb$aa
+lo$oogg
+
+'cal_count()'
+ATGACG {'A': 0, 'C': 2, 'G': 3, 'T': 5} {'A': 0, 'C': 2, 'G': 3, 'T': 5} True
+banana {'a': 0, 'b': 3, 'n': 4} {'a': 0, 'b': 3, 'n': 4} True
+
+'cal_occur'
+{'$': [0, 0, 1, 1, 1], 'A': [1, 1, 1, 1, 1], 'C': [0, 0, 0, 1, 1], 'G': [0, 1, 1, 1, 2]}
+{'$': [0, 0, 0, 0, 1, 1, 1], 'a': [1, 1, 1, 1, 1, 2, 3], 'b': [0, 0, 0, 1, 1, 1, 1], 'n': [0, 1, 2, 2, 2, 2, 2]}
+
+'update_range()'
+0 6 a (1, 3) (1, 3) True
+1 3 n (5, 6) (5, 6) True
+5 6 a (2, 3) (2, 3) True
+1 3 b (4, 4) (4, 4) True
+5 6 n (7, 6) (7, 6) True
+
+'find_match()'
+banana banana [0] [0] True
+a banana [1, 3, 5] [1, 3, 5] True
+ana banana [1, 3] [1, 3] True
+xyz banana [] [] True
+nab banana [] [] True
+go googol [0, 3] [0, 3] True
+
+'run_length_encode()'
+aaabbc a3b2c1 a3b2c1 True
+annb$aa a1n2b1$1a2 a1n2b1$1a2 True
+   True
+Note: The third run_length_encode() line looks blank because it’s the empty-string test, so the input and result are both empty.
+
+'run_length_decode()'
+aaabbc a3b2c1 a3b2c1 True round trip: True
+annb$aa a1n2b1$1a2 a1n2b1$1a2 True round trip: True
+aaaaaaaaaaaa a12 a12 True round trip: True
 
 # Successes
-Description of the team's learning points
+`find_match()` correctly handled all four types of patterns. The pattern banana occurs once in banana, the single letter a occurs several times, ana overlaps itself and was found at positions 1 and 3, and xyz and nab do not occur and returned empty lists.
+
+The two methods of building the BWT, sorting all rotations and using the suffix array, produced the same transform for both banana and googol, confirming that the shortcut matches the original method.
+
+Working the examples out by hand before testing showed that the `cal_occur()` docstring example for annb$aa is incorrect. Our code gives the correct occurrence table, which matches the hand-worked version.
+
+Two edge cases that could fail without any error message were handled correctly. In `update_range()`, when lower is 0, the code uses 0 for the occurrence count instead of `occur[a][-1]`, which in Python would return the last value in the list rather than 0. In `run_length_decode()`, runs longer than nine characters are read as multi-digit numbers, so a12 correctly decodes to twelve a’s.
 
 # Struggles
-Description of the stumbling blocks the team experienced
+The `cal_occur()` docstring example for annb$aa contains an error. Since annb$aa begins with a, the a list should start at 1, giving [1, 1, 1, 1, 1, 2, 3], but the docstring starts it at 0. The n list has the same problem, and should be [0, 1, 2, 2, 2, 2, 2]. Because the code produces the correct values, its output does not match the docstring, which could be mistaken for a bug in the code. Working the occurrence table out by hand showed that the code was right and the docstring was wrong.
+
+The note in `update_range()` says the function assumes `occur[a][-1] = 0`, which is misleading in Python. In Python, position -1 returns the last item in a list, not 0, so when lower is 0, `occur[a][lower - 1]` returns the final tally instead of 0. This produces a wrong search range without any error message. The code handles this by checking whether lower is 0 and using 0 for the occurrence count in that case.
+
+The notebook’s pseudocode for `BWT()` says to return both the transformed string and the position of the original text in the sorted rotations, but the function’s docstring and examples return only the transformed string. The code follows the docstring, since its examples define the expected output.
+
+The count table and the occurrence table were difficult to keep separate at first because they look similar. The count table holds one fixed number per character, the number of characters alphabetically smaller than it, excluding $. The occurrence table is a running tally that changes at every position of the BWT. Working out both tables by hand for banana made the difference clear.
+
+Backward search was the hardest part of the algorithm to follow. The pattern is processed from right to left, and the block of rows does not just shrink but moves to a different part of the sorted table with each character. Working through the search one character at a time, with each number traced back to the table it came from, was needed before the formulas made sense.
+
+# Reflection and Adaptive Learning
+The assignment’s design questions ask how we would check that the inverse transform really inverts the forward transform, we thought about it as a group but did not implement it. The inverse relies on the LF mapping and the $ end marker, starting at the $ row (row 0), the last-column character in that row is the character that comes before it in the original text, and the LF mapping gives the row where that same character appears in the first column. Repeating this until $ is reached, then reversing the collected characters, rebuilds the text. To check it, we would run a round-trip test, confirming that inverse_BWT(BWT(text)) returns the original text, on the same test strings used for the other functions. The $ is required for this, without it, the starting row and stopping point are unknown, and a text like "abab" has repeated rotations that make the transform impossible to undo uniquely. The checks we did run follow the same round-trip idea. Both BWT methods produced the same transform for banana and googol, and run_length_decode(run_length_encode(text)) returned the original text in every test.
 
 # Personal Reflections
 ## Ildiko Polyak
-Group leader's reflection on the project
+I was thoroughly confused after the lecture and dreading this assignmnet.  After reading more about the algorithm in my textbook and working through each portion by hand with a simple test case, the parts made sense.  By focusing on each function, I was able to write really basic pseudocode that I could scale up and transfer into more specific pseudocode for all the functions.  By focusing on each small part, I was able to piece together the algorithm as whole, otherwise, I would never have been able to tackle the project all at once.  Dianah and Abigail were helpful in writing the actual code for it, as this is still my greatest weakness in the class and I learn a lot by seeing how other people write different code for the same parts.
 
 ## Dianah Kasemir
 Other members' reflections on the project
 
 ## Abigail Ackor
 This project seemed daunting at first just because of the length of it. However, once we worked out our strategy as a group it went by faster than i anticipated. The code made sense and was a lot of iterations on itself which made identifying what different parts were doing easier. We had great pseudocode to start from Ildiko which made the formulation a lot easier.
+
 # Generative AI Appendix
-As per the syllabus
+Antropic Claude Opus 5.5 was used to confirm results from hand written test cases for each function prior to writing pseudocode and code. This helped confirm that errors existed in the docstring and were not mistakes made from misunderstanding. 
